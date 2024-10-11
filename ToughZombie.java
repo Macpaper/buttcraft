@@ -113,8 +113,6 @@ public void setType(EntityType type) {
 public void spawnEntityAt(World world, Location location) {
 	Entity entity = (Entity) world.spawnEntity(location.add(0, 2, 0), type);
 
-	
-	
 	fullName = name + ChatColor.RED + " HP: " + df.format(maxHealth);
 
 	entity.setCustomName(fullName);

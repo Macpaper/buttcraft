@@ -2,6 +2,7 @@ package me.Macpaper.GodSword;
 
 import org.bukkit.Location;
 import org.bukkit.Particle;
+import org.bukkit.Particle.DustOptions;
 import org.bukkit.World;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -17,21 +18,19 @@ public class ParticleLine {
 	Particle particle;
 	JavaPlugin plugin;
 
-	Player player;
 	World world;
 	
-	public ParticleLine(Player player, JavaPlugin plugin, Particle particle, Location start, Location end,
+	public ParticleLine(World world, JavaPlugin plugin, Particle particle, Location start, Location end,
 			double duration) {
-		this.player = player;
 		this.particle = particle;
 		this.plugin = plugin;
 		this.start = start;
 		this.end = end;
 		this.duration = duration;
 		
-		this.world = player.getWorld();
+		this.world = world;
 	}
-
+	
 	public void spawnLineDelay() {
 		World world = start.getWorld();
 
@@ -75,7 +74,7 @@ public class ParticleLine {
 				if (dura >= duration) {
 					cancel();
 					// ???? apparently explode for judgment cut regular
-					player.getWorld().createExplosion(end.getX(), end.getY(), end.getZ(), 10, false, false);
+					world.createExplosion(end.getX(), end.getY(), end.getZ(), 10, false, false);
 				}
 			}
 
@@ -131,7 +130,6 @@ public class ParticleLine {
 	}
 	
 	public void createTrailCircle(double radius) {
-		World world = player.getWorld();
 //
 //		double diffX = start.getX() - end.getX();
 //		double diffY = start.getY() - end.getY();
@@ -431,6 +429,57 @@ public class ParticleLine {
 
 
 
+	public void spawnLine(int c, double offx, double offy, double offz, double extra, DustOptions dustOptions) {
+		World world = start.getWorld();
+		
+		double diffX = start.getX() - end.getX();
+		double diffY = start.getY() - end.getY();
+		double diffZ = start.getZ() - end.getZ();
+		double dist = Math.sqrt((diffX * diffX + diffY * diffY + diffZ * diffZ));
+		int numberOfParticles = (int) (dist * 20);
+
+		double ox = start.getX();
+		double oy = start.getY();
+		double oz = start.getZ();
+		
+		new BukkitRunnable() {
+			int ticks = 0;
+			int dura = 0;
+			boolean done = false;
+
+			@Override
+			public void run() {
+				if (done)
+					return;
+				ticks++;
+				dura++;
+
+				if (ticks > 2) {
+					
+					for (int i = 0; i < numberOfParticles; i++) {
+						Location l = start;
+						double x = ox - diffX / numberOfParticles * i;
+						double y = oy - diffY / numberOfParticles * i;
+						double z = oz - diffZ / numberOfParticles * i;
+
+						l.setX(x);
+						l.setY(y);
+						l.setZ(z);
+						//
+						int c = 3; // <- count
+						//                  particle, l, c,ox,oy,oz, extra, data
+						world.spawnParticle(particle, l, 1, offx, offy, offz, 0, dustOptions);
+					}
+					ticks = 0;
+					if (dura >= duration) {
+						cancel();
+					}
+
+				}
+			}
+
+		}.runTaskTimer(plugin, 0, 1);
+	}
 	
 	public void spawnLine() {
 		World world = start.getWorld();
@@ -468,6 +517,9 @@ public class ParticleLine {
 						l.setX(x);
 						l.setY(y);
 						l.setZ(z);
+						//
+						int c = 3; // <- count
+						//                  particle, l, c,ox,oy,oz, extra, data
 						world.spawnParticle(particle, l, 1, 0, 0, 0, 0, null);
 					}
 					ticks = 0;
